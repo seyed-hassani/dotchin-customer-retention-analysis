@@ -1,0 +1,670 @@
+---
+title: "</p>![](Logo.png){width=1in}</p> \n STATS/CSE 780</p>  \n Final Project Report 
+  1 \n \n"
+author: 'Seyed Mohammad Mehdi Hassani Najafabadi(Student ID: 400489126)'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document:
+    toc: yes
+    keep_tex: yes
+  html_document:
+    df_print: paged
+  word_document:
+    toc: yes
+always_allow_html: yes
+header-includes:
+- \usepackage{amsmath}
+- \usepackage{bbm}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{graphicx}
+- \usepackage{float}
+- \usepackage{apacite}
+- \usepackage{natbib}
+fontsize: 11pt
+geometry: margin = 1in
+linestretch: 1.5
+bibliography: references.bib
+---
+
+
+
+```{r,warning=FALSE,include=FALSE}
+# Load the required libraries
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+library(plotly)
+library(tidyr )
+library(reshape2 )
+library(class)
+library(caret)
+library(glmnet)
+library(car)
+library(nnet)
+library(rpart)
+library(randomForest)
+library(e1071)
+library(xgboost)
+library(mgcv)
+library(keras)
+library(pROC)
+library(knitr)
+library(kableExtra)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE)
+```
+
+\newpage
+
+```{r}
+# Load Bank Marketing Archive dataset
+original_data<- read_delim("bank.csv",delim = ";",show_col_types = FALSE)
+```
+
+# Introduction
+The problem we discussed in this project is Identifying the best strategies to improve the effectiveness of future marketing campaigns by analyzing the patterns from the last marketing campaign performed by the bank.The data used in this project pertains to direct marketing campaigns conducted by a Portuguese banking institution through phone calls. The dataset was sourced from UCI Machine Learning Repository [[1]][1], and is publicly available for research. A Portuguese retail bank was addressed, with 17 social-economic variables collected  from 4521 costumers (observation) between 2008 to 2013, thus including the effects of the 2008 financial crisis [[2]][2].
+This dataset has been widely used for data analysis in terms of improve next marketing campaigns and leverage the financial performance of marketing campaign Kaggle bank marketing analysis projects, such as [[3]][3] and [[4]][4]. In this project the problem statement can be broken down into two main tasks:Predicting whether a client will subscribe to a term deposit product (variable 'y') using the provided dataset and different classification Techniques, and finding meaningful patterns to improve the credibility for telemarketing campaign. 
+
+# Methods
+In order to address the problems posed in the problem definition, four different machine learning classification algorithms have been used, all of these methods have unique strengthener to examine the best method:
+1- Decision tree(DT):
+DT has the advantage of fitting models that tend to be easily understood by humans, while also providing good predictions in classifications tasks.In addition, DT is capable of handling mixed data types which we have in this problem.The rationale for selecting the tuning parameters for DT is : 1- max_depth: Controls the maximum depth of the tree, 2- min_samples_split: Determines the minimum number of samples required to split an internal node, 3- min_samples_leaf: Specifies the minimum number of samples required to be at a leaf node. 
+
+2- Random Forest(RF):
+RF is an ensemble learning method that constructs multiple decision trees during training and outputs the class with the majority vote from individual trees. It offers improved accuracy and reduced overfitting compared to a single decision tree. RF can handle mixed data types, making it suitable for this problem, and provides an added advantage of feature importance estimation.The rationale for selecting the tuning parameters for RF is :1-n_estimators: Refers to the number of trees in the forest, 2- max_features: Specifies the maximum number of features to consider when looking for the best split,3-max_depth, min_samples_split, and min_samples_leaf: These parameters have the same purpose as in the decision tree and help to control the complexity of individual trees in the forest.
+
+3- Gradient Boosting classifier(GBC): 
+GBC is another ensemble learning technique that combines multiple weak learners, usually decision trees, to build a strong predictive model. It builds trees sequentially, with each tree attempting to correct the errors of its predecessor. GB is known for its high predictive accuracy and can handle mixed data types. However, it might require more computational resources compared to other methods.The rationale for selecting the tuning parameters for GBC is :1- n_estimators: Determines the number of boosting stages or weak learners, 2-learning_rate: Controls the contribution of each weak learner in the ensemble. 3- max_depth, min_samples_split, and min_samples_leaf: As in the decision tree and random forest, these parameters help control the complexity of the base learners.
+
+4- Support Vector machine(SVM):
+SVM is a powerful machine learning algorithm that is widely used in classification tasks. It finds the optimal hyperplane that separates the data points of different classes with the maximum margin. SVM can effectively handle high-dimensional data and is less prone to overfitting. Though it may require more computational resources and preprocessing steps, such as feature scaling, it can deliver good classification performance on diverse problems.The rationale for selecting the tuning parameters for SVM is :1- C: This regularization parameter controls the trade-off between maximizing the margin and minimizing the classification error.2-kernel: Specifies the kernel function to use in the algorithm. 3- gamma: This parameter is only applicable for certain kernel functions, such as the radial basis function (RBF) kernel. 
+To effectively compare the four classification algorithms, we use the following evaluation metrics: ROC curve, accuracy, precision, recall, and F1 score. The ROC curve assesses the trade-off between sensitivity and specificity, making it useful for imbalanced datasets. Accuracy measures the proportion of correct predictions, while precision and recall evaluate the costs of false positives and false negatives, respectively. The F1 score balances precision and recall, providing a comprehensive measure of classifier performance. Analyzing these metrics helps determine the most suitable classifier for the given problem based on specific requirements and performance aspects.
+
+# Results
+The number of observation is 4521 and there are 17 variables which are described
+follows:
+
+## Variable names
+Variable names in this data sets are: 1- age (numeric),2-job(categorical),
+3- marital status(categorical),4- education(categorical),5- has credit in default? (binary: "yes","no"),6- average yearly balance, in euros (numeric),7- has housing loan? (binary: "yes","no"),8- has personal loan? (binary: "yes","no"),9- contact communication type(categorical),10- last contact day of the month (numeric),
+11- month: last contact month of year(categorical),12- last contact duration(numeric),13- number of contacts performed during this campaign(numeric),14- number of days that passed by after the client(numeric),
+15- number of contacts performed before this campaign and for this client (numeric),16- outcome of the previous marketing campaign(categorical),17- **
+Target Variable**: has the client subscribed a term deposit? (binary:"yes","no")
+
+
+## Exoplanetary data analysis
+
+### Missing Vlaue
+After importing the dataset, we have to look at the total number of rows in the dataset and analyze the number of missing values.So As it is shown , there are no missing values.
+
+```{r, echo=FALSE}
+
+#cat("Number of missing values is",sum(is.na(original_data)), "\n")
+clean_data <- na.omit(original_data)
+
+```
+
+
+## Summeries and Data type
+In the dataset we have both categorical and numerical columns. Let's look at 
+the values of categorical columns first.
+
+```{r}
+# histogram fo ,categorical variables counts
+cat_variables <- c('job', 'marital', 'education', 'default', 'housing', 'loan', 'contact', 'month','poutcome', 'y')
+plots <- list()
+for (var in cat_variables) {
+  plot <- ggplot(clean_data, aes_string(x = var)) + geom_bar() + ggtitle(paste("Bar Chart for", var))+theme(plot.title = element_text(hjust = 0.5)) +
+  theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5, size = 8),
+            axis.title = element_text(size = 8),
+            axis.text = element_text(size = 4,angle=45))
+  plots[[var]] <- plot
+}
+grid.arrange(grobs = plots, ncol = 3)
+
+```
+
+Now let's look at the numerical columns' values. The most convenient way to look at the numerical values is plotting histograms.
+
+```{r}
+# histogram for numerical variables 
+Num_variables <- c('age', 'day','duration', 'campaign', 'previous')
+continuous_vars <- c('balance', 'pdays')
+
+plots <- list()
+for (var in Num_variables) {
+  plot <- ggplot(clean_data, aes_string(x = var)) + geom_bar() + ggtitle(paste("Bar Chart for", var))
+  plots[[var]] <- plot
+}
+# Loop through the continuous variables and create histograms
+for (var in continuous_vars) {
+  plot <- ggplot(clean_data, aes_string(x = var)) + geom_histogram(bins = 30) + ggtitle(paste("Histogram for", var))+theme_minimal()
+  plots[[var]] <- plot
+}
+
+grid.arrange(grobs = plots, ncol = 3)
+
+```
+
+## Correlation Analysis
+
+Since some of the variables in the dataset are categorical, the correlation analysis has been performed only on the numerical variables.Upon examining the heatmap, we found that the color patterns revealed little to no correlation between the features in our dataset. This means that the numerical variables under study do not exhibit strong linear relationships with each other. Consequently, this lack of correlation suggests that the variables are relatively independent, which can be an advantageous attribute when employing certain machine learning algorithms or statistical techniques that assume minimal multicollinearity between predictors. In the context of our study, this finding implies that further investigation may be necessary to uncover more complex, non-linear relationships, or to explore the potential influence of the categorical variables on the outcome of interest.
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(reshape2)
+# Select only numeric columns
+numeric_cols <- sapply(original_data, is.numeric)
+numeric_data <- original_data[, numeric_cols]
+# Calculate correlation matrix
+cor_matrix <- cor(numeric_data)
+# Convert correlation matrix to long format
+cor_df <- melt(cor_matrix)
+# Plot correlation matrix as a heatmap
+ggplot(cor_df, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 0.1))+
+  # set the size of the plot to be smaller
+  labs(title="Correlation Matrix") + 
+  theme(plot.title = element_text(hjust = 0.1)) +
+  theme(plot.margin = unit(c(0.2, 0.2, 0.2, 0.2), "cm"),
+        axis.title.x = element_text(size = rel(0.9)),
+        axis.title.y = element_text(size = rel(0.9)),
+        axis.text.x = element_text(size = rel(0.8), angle = 45, hjust = 1),
+        axis.text.y = element_text(size = rel(0.8)),
+        legend.text = element_text(size = rel(0.8)),
+        legend.title = element_text(size = rel(0.9)),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        legend.position="bottom") +
+  coord_fixed(ratio = 1) + # make the aspect ratio of the plot 1:1
+  theme(plot.title = element_text(size = 8)) +theme_minimal()+ # set the size of the title
+  theme(legend.title=element_text(size=8), legend.text=element_text(size=8,angle=10)) + # set the size of the legend
+  theme(axis.title.x = element_text(size = 8), axis.title.y = element_text(size = 8)) + # set the size of the axis labels
+  theme(axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + # set the size of the axis tick labels
+  theme(panel.spacing.x=unit(0.1, "lines"), panel.spacing.y=unit(0.1, "lines")) +
+  theme(legend.key.size = unit(0.2, "cm"))
+```
+
+## Outliers analysis
+According to the figure(), there are some outliers which can be handled by inter quarterly Rang technique(IQR) techniques:
+```{r}
+# Create a function to filter outliers based on IQR
+filter_outliers <- function(data) {
+  numeric_columns <- sapply(data, is.numeric)
+  numeric_data <- data[, numeric_columns]
+  bounds <- t(sapply(numeric_data, function(x) {
+    IQR_x <- IQR(x, na.rm = TRUE)
+    Q1 <- quantile(x, 0.25, na.rm = TRUE)
+    Q3 <- quantile(x, 0.75, na.rm = TRUE)
+    lower_bound <- Q1 - 1.5 * IQR_x
+    upper_bound <- Q3 + 1.5 * IQR_x
+    return(c(lower_bound, upper_bound))
+  }))
+
+  within_bounds <- mapply(function(column, lower, upper) {
+    column >= lower & column <= upper
+  }, numeric_data, bounds[, 1], bounds[, 2])
+
+  # Consider only rows that have no outliers in numeric columns
+  no_outliers_indices <- rowSums(within_bounds) == ncol(numeric_data)
+
+  # Filter the dataset based on the calculated indices
+  no_outliers_data <- data[no_outliers_indices, ]
+  return(no_outliers_data)
+}
+# Split data based on target variable
+data_yes <- clean_data[clean_data$y == "yes", ]
+data_no <- clean_data[clean_data$y == "no", ]
+
+# Apply the filter_outliers function to each class
+filtered_data_yes <- filter_outliers(data_yes)
+filtered_data_no <- filter_outliers(data_no)
+
+# Merge the filtered datasets
+filtered_data <- rbind(filtered_data_yes, filtered_data_no)
+```
+
+## Analysis of the Response Column
+It is very important to look at the response column, which holds the information, which we are going to predict. In our case we should look at 'deposit' column and compare its values to other columns.
+First of all we should look at the portion of 'yes' and 'no' values in the response column 'deposit'.
+```{r}
+# Convert the target variable to a factor and count the occurrences of each level
+target_counts <- as.data.frame(table(filtered_data$y))
+
+# Create a pie chart
+ggplot(target_counts, aes(x = "", y = Freq, fill = Var1)) +
+  geom_bar(stat = "identity", width = 0.01) +
+  coord_polar("y", start = 0) +theme_minimal()+
+  theme_void() +
+  theme(legend.position = "right") +
+  labs(fill = "Target Variable", title = "Distribution of Yes and No in Target Variable")
+```
+Our findings show that the months of May, June, July, and August, which constitute the summer season, have a higher number of phone call campaigns. This could be referred to as the "Summer Camp" period for marketing efforts.
+
+```{r,warning=FALSE}
+# Create a colorful histogram for the 'month' variable
+ggplot(filtered_data, aes(x = filtered_data$month, fill = filtered_data$month)) +
+  geom_histogram(stat = "count", position = "dodge", binwidth = 0.25, color = "black") +     theme(plot.title = element_text(hjust = 0.1)) +
+   theme(plot.margin = unit(c(0, 0, 0, 0), "cm") ) +
+  theme_minimal() +theme(
+            axis.title = element_text(size = 8),
+            axis.text = element_text(size = 8,angle=90))+
+  labs(x = "Job", y = "Count", title = "Histogram of Jobs", fill = "Job") +
+  scale_fill_brewer(palette = "Spectral")
+```
+
+
+it's crucial to focus on specific target groups for these campaigns. Our data suggests that targeting individuals in management positions, blue-collar workers, and technicians may yield better results in terms of term deposit subscriptions. By concentrating our efforts on these groups, we can enhance the efficiency and success of our direct marketing campaigns.
+
+```{r,warning=FALSE}
+# Create a colorful histogram for the 'month' variable
+ggplot(filtered_data, aes(x = filtered_data$job, fill = filtered_data$job)) +
+  geom_histogram(stat = "count", position = "dodge", binwidth = 1, color = "black") +     theme(plot.title = element_text(hjust = 0.1)) +
+   theme(plot.margin = unit(c(0, 0, 0, 0), "cm") ) +
+  theme_minimal() +theme(
+            axis.title = element_text(size = 8),
+            axis.text = element_text(size = 8,angle=90))+
+  labs(x = "Job", y = "Count", title = "Histogram of Jobs", fill = "Job") +
+  scale_fill_brewer(palette = "Spectral")
+```
+
+
+Based on the following analysis, we recommend not calling clients too many times during this period. Overwhelming clients with phone calls may lead to reduced effectiveness of the marketing campaignand a negative perception of the bank.
+
+```{r}
+# Create a plot of the 'previous' variable versus the target 'y' variable
+ggplot(filtered_data, aes(x = previous, y = y)) +
+  geom_jitter(alpha = 0.5, width = 0.3, height = 0.3) +
+  theme_minimal() +
+  labs(x = "Call Numbers", y = "Term deposit? (y)", title = "Previous vs. Target (y)") +
+  theme(
+    plot.title = element_text(hjust = 0.1, size = 12),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 8)
+    
+  )
+
+```
+
+# Interpretation of results applying two methods
+We considered four different machine learning models: Decision Trees, Random Forest, Support Vector Machines (SVM), and Gradient Boosting. Each model has its unique strengths and applications. To validate our models, we employed K-folds cross-validation, which involves splitting the data into train and test sets multiple times, ensuring a more accurate and reliable evaluation of the models'
+performance.
+
+## Split Data set to train and test by Kfolds and Decision trees
+To validate our models, we employed K-folds cross-validation, which involves splitting the data into train and test sets multiple times, ensuring a more accurate and reliable evaluation of the models'performance.
+```{r}
+# Define your data, target variable (y), and the number of folds for cross-validation
+y <- filtered_data$y
+k <- 5
+
+# Create folds for cross-validation
+set.seed(123)
+folds <- createFolds(y, k = k, list = TRUE, returnTrain = FALSE)
+
+# Initialize variables to store performance metrics for the Decision Trees classifier
+dt_acc <- numeric(k)
+
+# Find the best train and test sets based on Decision Trees performance
+best_acc <- 0
+best_train_set <- NULL
+best_test_set <- NULL
+
+for (i in 1:k) {
+  # Create train and test sets for the current fold
+  train_set <- filtered_data[-folds[[i]], ]
+  test_set <- filtered_data[folds[[i]], ]
+  
+  # Decision Trees
+  dt_model <- rpart(y ~ ., data = train_set, method = "class")
+  dt_pred <- predict(dt_model, test_set, type = "class")
+  dt_acc[i] <- sum(dt_pred == test_set$y) / nrow(test_set)
+  
+  # Check if the current fold has the highest accuracy
+  if (dt_acc[i] > best_acc) {
+    best_acc <- dt_acc[i]
+    best_train_set <- train_set
+    best_test_set <- test_set
+  }
+}
+
+```
+
+
+
+
+
+# Training
+```{r}
+confusion_matrix_plot <- function(matrices, titles) {
+  n <- length(matrices)
+  plots_list <- list()
+  
+  for (i in 1:n) {
+    matrix <- matrices[[i]]
+    title <- titles[[i]]
+    
+    matrix_df <- as.data.frame(matrix)
+    matrix_df$Freq_Label <- paste0(matrix_df$Freq)
+    p <- ggplot(matrix_df, aes(x = Prediction, y = Reference)) +
+      geom_tile(aes(fill = Freq), color = "white") +
+      scale_fill_gradient(low = "white", high = "steelblue") +
+      geom_text(aes(label = Freq_Label), size = 6, color = "black") +
+      labs(title = title, x = "Prediction", y = "Reference", fill = "Frequency") +
+      theme(plot.title = element_text(hjust = 0.5, size = 8),
+            axis.title = element_text(size = 8),
+            axis.text = element_text(size = 8))
+    
+    plots_list[[i]] <- p
+  }
+  
+  return(plots_list)
+}
+
+
+#=========================Decision Tree======================================
+
+# Decision Trees
+dt_model <- rpart(y ~ ., data = best_train_set, method = "class")
+dt_pred <- predict(dt_model, best_test_set, type = "class")
+dt_acc <- sum(dt_pred == best_test_set$y) / nrow(best_test_set)
+dt_precision <- precision(as.factor(best_test_set$y), as.factor(dt_pred))
+dt_recall <- recall(as.factor(best_test_set$y), as.factor(dt_pred))
+dt_f1 <- 2 * dt_precision * dt_recall / (dt_precision + dt_recall)
+
+# Confusion Matrix 
+dt_cm <- confusionMatrix(dt_pred, as.factor(best_test_set$y))$table
+
+#=========================SVM======================================
+# SVM
+svm_model <- svm(as.factor(y) ~ ., data = best_train_set, kernel = "linear", probability = TRUE)
+svm_pred <- predict(svm_model, best_test_set, type = "class")
+svm_acc <- sum(svm_pred == best_test_set$y) / nrow(best_test_set)
+svm_precision <- precision(as.factor(best_test_set$y), as.factor(svm_pred))
+svm_recall <- recall(as.factor(best_test_set$y), as.factor(svm_pred))
+svm_f1 <- 2 * svm_precision * svm_recall / (svm_precision + svm_recall)
+# Confusion Matrix 
+svm_cm <- confusionMatrix(svm_pred, as.factor(best_test_set$y))$table
+#=========================Random Forest======================================
+
+# Random Forest
+best_train_set$y <- as.factor(best_train_set$y)
+best_test_set$y <- as.factor(best_test_set$y)
+rf_model <- randomForest(y ~ ., data = best_train_set, ntree = 100, method = "class")
+rf_pred <- predict(rf_model, best_test_set)
+rf_acc <- sum(rf_pred == best_test_set$y) / nrow(best_test_set)
+rf_precision <- precision(as.factor(best_test_set$y), as.factor(rf_pred))
+rf_recall <- recall(as.factor(best_test_set$y), as.factor(rf_pred))
+rf_f1 <- 2 * rf_precision * rf_recall / (rf_precision + rf_recall)
+# Confusion Matrix 
+rf_cm <- confusionMatrix(rf_pred, as.factor(best_test_set$y))$table
+#=========================Gradient Boosting Classifier====================
+
+# Gradient Boosting Classifier
+best_train_set$y <- as.factor(best_train_set$y)
+best_train_set$y <- as.numeric(best_train_set$y) - 1
+best_test_set$y <- as.numeric(best_test_set$y) - 1
+
+train_matrix <- xgb.DMatrix(data.matrix(best_train_set[, -which(colnames(best_train_set) == "y")]), 
+                            label = best_train_set$y)
+test_matrix <- xgb.DMatrix(data.matrix(best_test_set[, -which(colnames(best_test_set) == "y")]), 
+                           label = best_test_set$y)
+
+# Set the parameters for XGBoost
+xgb_params <- list(
+  objective = "binary:logistic",
+  eval_metric = "logloss",
+  eta = 0.1,
+  max_depth = 6,
+  min_child_weight = 1,
+  subsample = 0.8,
+  colsample_bytree = 0.8
+)
+
+# Train the XGBoost model
+  xgb_model <- xgb.train(
+    params = xgb_params, 
+    data = train_matrix, 
+    nrounds = 100
+  )
+  
+  # Make predictions on the test set
+  xgb_pred <- predict(xgb_model, test_matrix)
+  xgb_pred <- ifelse(xgb_pred > 0.5, 1, 0)
+  xgb_acc <- sum(xgb_pred == best_test_set$y) / nrow(best_test_set)
+  xgb_precision <- precision(as.factor(best_test_set$y), as.factor(xgb_pred))
+  xgb_recall <- recall(as.factor(best_test_set$y), as.factor(xgb_pred))
+  xgb_f1 <- 2 * xgb_precision * xgb_recall / (xgb_precision + xgb_recall)
+
+  
+  # Confusion Matrix 
+xgb_cm <- confusionMatrix(as.factor(xgb_pred), as.factor(best_test_set$y))$table
+ 
+  # Plot Confusion Matrix
+  Confusion_Matrix <- list(dt_cm, svm_cm, rf_cm, xgb_cm)
+  titles <- list("Decision tree", "SVM", "Random Forest", "Gradient Boosting")
+
+# Create the list of ggplot objects
+plots_list <- confusion_matrix_plot(Confusion_Matrix, titles)
+
+# Determine the layout based on the number of plots
+num_plots <- length(plots_list)
+num_rows <- ceiling(sqrt(num_plots))
+num_cols <- ceiling(num_plots / num_rows)
+
+# Arrange the plots in a grid layout
+grid.arrange(grobs = plots_list, nrow = num_rows, ncol = num_cols)
+
+```
+
+## Rank
+
+This section calculates the evaluation metrics (accuracy, F1 score, precision, and recall) for four classifiers (Decision Trees, SVM, Random Forest, and XGBoost). It then ranks the classifiers based on each of the evaluation metrics and computes their average rank. The classifiers are sorted by their average rank to compare their performance.The reason for using ranking instead of relying on a single metric is that it allows for a more comprehensive comparison of the classifiers. By taking into account multiple evaluation metrics, the ranking method provides a better overview of the overall performance of each classifier. It helps to identify the classifiers that perform consistently well across all the metrics, rather than just excelling in one particular aspect.
+```{r}
+# Create a data frame to store the evaluation metrics
+metrics <- data.frame(
+  classifier = c("Decision Trees", "SVM", "Random Forest", "XGBoost"),
+  accuracy = c(dt_acc, svm_acc, rf_acc, xgb_acc),
+  f1_score = c(dt_f1, svm_f1, rf_f1, xgb_f1),
+  precision = c(dt_precision, svm_precision, rf_precision, xgb_precision),
+  recall = c(dt_recall, svm_recall, rf_recall, xgb_recall)
+)
+
+# Calculate the average rank of each classifier across all metrics
+metrics[, c("accuracy_rank", "f1_score_rank", "precision_rank", "recall_rank")] <- 
+  apply(metrics[, c("accuracy", "f1_score", "precision", "recall")], 2, rank)
+
+metrics$Rank <- rowMeans(metrics[, c("accuracy_rank", "f1_score_rank", "precision_rank", "recall_rank")])
+
+# Sort the classifiers based on the average rank
+metrics <- metrics[order(metrics$Rank,decreasing=FALSE), ]
+# Create a well-organized table for the report
+# Remove the third column
+metrics <- metrics[, c(-6,-7,-8,-9,-10)]
+colnames(metrics)[0] <- "Rank"
+
+# Set the font size, row height, and column width
+font_size <- "\\small"
+row_height <- "\\renewcommand{\\arraystretch}{1.5}"
+column_widths <- c("0.5cm", "3cm", "2cm","2cm","2cm","2cm","0cm","0cm","0cm","0cm","2cm")
+formatted_table <- metrics %>%
+  kable("latex", caption = "Classifier Evaluation Metrics and Ranking", align = "c") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "gray") %>%
+  column_spec(1, bold = TRUE, width = column_widths[1]) %>%
+  column_spec(2, width = column_widths[2]) %>%
+  column_spec(3, width = column_widths[3])%>%
+  column_spec(4, width = column_widths[4]) %>%
+  column_spec(5, width = column_widths[5])%>%
+  column_spec(6, width = column_widths[6])%>%
+   column_spec(7, width = column_widths[7])%>%
+   column_spec(8, width = column_widths[8])%>%
+   column_spec(9, width = column_widths[9])%>%
+   column_spec(10, width = column_widths[10])%>%
+  column_spec(11, width = column_widths[11])
+# Print the table
+formatted_table
+
+```
+## ROC evaluation
+
+In this analysis, we compared the performance of four different classifiers using Receiver Operating Characteristic (ROC) curves and Area Under the Curve (AUC) values. Upon inspecting the ROC curves, it was observed that the Decision Tree classifier had a curve that was close to the minimum ROC, indicating comparatively lower performance than the other classifiers. A higher ROC curve represents better classifier performance, while a curve closer to the minimum ROC suggests that the classifier's performance is closer to that of a random classifier. 
+
+```{r,warning=FALSE,message=FALSE}
+
+ # Assuming the classifiers are trained and the predictions are available
+# Replace the placeholders with the actual prediction probabilities for each classifier
+dt_prob <- predict(dt_model, best_test_set, type = "prob")[, 2];
+svm_model <- svm(as.factor(y) ~ ., data = best_train_set, kernel = "linear", probability = TRUE);
+
+svm_prob <- as.vector(attr(predict(svm_model, best_test_set, probability = TRUE), "probabilities")[, 2]);
+rf_prob <- predict(rf_model, best_test_set, type = "prob")[, 2];
+xgb_prob <- predict(xgb_model, test_matrix);
+
+# Calculate the True Positive Rate (TPR) and False Positive Rate (FPR)
+dt_roc <- roc(best_test_set$y, dt_prob);
+svm_roc <- roc(best_test_set$y, svm_prob);
+rf_roc <- roc(best_test_set$y, rf_prob);
+xgb_roc <- roc(best_test_set$y, xgb_prob);
+
+# Create a dataframe to store the ROC data
+roc_data <- data.frame(
+  TPR = c(dt_roc$sensitivities, svm_roc$sensitivities, rf_roc$sensitivities, xgb_roc$sensitivities),
+  FPR = c(dt_roc$specificities, svm_roc$specificities, rf_roc$specificities, xgb_roc$specificities),
+  Classifier = c(rep("Decision Trees", length(dt_roc$sensitivities)),
+                 rep("SVM", length(svm_roc$sensitivities)),
+                 rep("Random Forest", length(rf_roc$sensitivities)),
+                 rep("XGBoost", length(xgb_roc$sensitivities)))
+)
+
+# Plot the ROC curves
+ggplot(roc_data, aes(x = 1 - FPR, y = TPR, color = Classifier)) +
+  geom_line() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(title = "ROC Curves for Different Classifiers", x = "Specificity", y = "Sensitivity", color = "Classifier") +
+  theme_minimal()
+
+
+```
+
+
+## Feature importance
+Feature importance analysis is conducted to identify the most influential variables in a predictive model, providing insights into the underlying relationships between features and the target variable. By understanding these relationships, we can make more informed decisions about feature selection and model improvement, ultimately enhancing the model's predictive performance.
+```{r,warning=FALSE}
+# Get feature importance from the Decision Tree model
+dt_importance <- as.data.frame(dt_model$variable.importance)
+colnames(dt_importance) <- "importance"
+dt_importance$feature <- row.names(dt_importance)
+dt_importance <- dt_importance[order(-dt_importance$importance), ]
+# Get feature importance from the Random Forest model
+rf_importance <- as.data.frame(importance(rf_model))
+colnames(rf_importance) <- "importance"
+rf_importance$feature <- row.names(rf_importance)
+rf_importance <- rf_importance[order(-rf_importance$importance), ]
+# Get feature importance from the XGBoost model
+xgb_importance <- xgb.importance(feature_names = colnames(best_train_set[, -which(colnames(best_train_set) == "y")]), model = xgb_model)
+xgb_importance$feature <- row.names(xgb_importance)
+
+plot_feature_importance <- function(importance_data, model_name) {
+  ggplot(importance_data, aes(x = reorder(feature, -importance), y = importance)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(title = paste0("Feature Importance for ", model_name),
+         x = "Feature",
+         y = "Importance") +
+    theme(plot.title = element_text(hjust = 0.5, size = 14),
+          axis.title = element_text(size = 12),
+          axis.text = element_text(size = 10))
+}
+
+# Ensure the same structure for all data frames
+dt_importance$Model <- "Decision Tree"
+rf_importance$Model <- "Random Forest"
+xgb_importance$Model <- "XGBoost"
+xgb_importance <- xgb_importance[,-c(3,4)]
+colnames(xgb_importance)[c(1,2)] <- c("feature", "importance")
+
+
+dt_importance <- dt_importance[, c("feature", "importance", "Model")]
+rf_importance <- rf_importance[, c("feature", "importance", "Model")]
+xgb_importance <- xgb_importance[,c("feature", "importance", "Model")]
+
+
+
+# Combine feature importance data frames
+#all_importance <- rbind(dt_importance, rf_importance, xgb_importance)
+
+# Adjust the plot creation function
+plot_feature_importance <- function(importance_data) {
+  ggplot(importance_data, aes(x = reorder(feature, -importance), y = importance, fill = feature)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    coord_flip() +
+    labs(
+         x = "Feature",
+         y = "Importance") +
+    theme(plot.title = element_text(hjust = 0.5, size = 14),
+          axis.title = element_text(size = 12),
+          axis.text = element_text(size = 10)) +
+    facet_wrap(~Model, scales = "free_y", ncol = 3) +
+    guides(fill = FALSE)
+}
+
+
+# Create the combined feature importance plot
+dt_importance_plot <- plot_feature_importance(dt_importance)
+rf_importance_plot <- plot_feature_importance(rf_importance)
+xgb_importance_plot <- plot_feature_importance(xgb_importance)
+
+# Display the plots in one row
+grid.arrange(dt_importance_plot, rf_importance_plot, xgb_importance_plot, ncol = 3)
+```
+The analysis revealed a 34% difference between the impact of contact duration and the number of contacts. Some features such as having housing or personal loans, and the client's education levelwere found to be less significant in determining term deposit subscriptions.
+made.
+ 
+# Conclusion
+
+1- Key factors influencing the outcome of phone call campaigns include the number of days since the client was last contacted, the number of contacts performed, and the client's account balance.  
+2- Targeting individuals with longer call durations may prove advantageous, as they exhibit an average subscription rate of 78%.  
+3- There is a noteworthy relationship between balance and loans: individuals with low or no balance are more likely to have a housing loan compared to those with average and high balance categories. This can impact the probability of opening a term deposit account.  
+4- Our analysis indicates that marketing campaigns are particularly active during the months of May, June, and July.  
+
+## Methods Comparison
+1- The Decision Tree model outperformed other models in our study, making it the most effective option among the evaluated methods.
+2- All four methods achieved overall accuracies greater than 95%, demonstrating strong predictive capabilities.  
+3- Crucial features impacting term deposit subscription include: 1- Last contact duration, 2- Number of days since the client was last contacted, 3- Number of contacts performed, and 4- Client's account balance.  
+4- A significant 34% difference was observed between the impact of contact duration and the number of contacts made.  
+5- Interestingly, factors such as housing or personal loans and the client's education level were found to be less significant in determining term deposit subscriptions. These findings provide valuable insights to help inform future marketing campaigns, enabling banks to optimize their strategies for increased success rates in selling term deposit products.  
+
+## Analytical challenges
+1- Since we don't have enough positive outcomes in your dataset for a binary classification problem, it can be challenging to train and evaluate a machine learning model. One technique that can be used in such cases is using decision trees, which can help mitigate the impact of imbalanced classes and provide more reliable estimates of model performance.
+
+2- Interpretability of the results is a challenge because the decision tree model outperformed other models, but it may be difficult to understand why this was the case. Decision trees are known for their interpretability, but as the model becomes more complex, it can be challenging to understand the decision-making process. This is especially true for large datasets with numerous features, where decision trees can quickly become very complex. Thus, it may be difficult to explain why certain features were given higher importance than others, which could limit the ability to make actionable insights.
+
+3- Reproducibility of the results is another challenge because the analysis may not be easily reproducible due to factors such as changes in the dataset, the use of different machine learning models, or differences in software or hardware. This can make it difficult to verify or replicate the findings, which could limit the confidence in the conclusions drawn from the analysis. Reproducibility is an important consideration in data analysis, as it allows others to verify the results and build on them, potentially leading to new insights and improved methods.
+
+Additionally, computational cost is also a challenge that can arise during data analysis. Certain machine learning algorithms can be computationally expensive, especially when working with large datasets with many features. This can limit the scalability of the analysis, making it difficult or impossible to work with larger datasets or to run the analysis in a reasonable amount of time. Therefore, it is important to carefully consider the computational cost of different methods when selecting an appropriate approach for a given dataset.
+\newpage
+# References
+[1]. Bank Marketing Data Set,UCI Machine Learning Repository,<https://archive.ics.uci.edu/ml/datasets/bank+marketing,2008>
+
+[1]: <https://archive.ics.uci.edu/ml/datasets/bank+marketing>
+
+[2]. S. Moro, P. Cortez and P. Rita. A Data-Driven Approach to Predict the Success of Bank Telemarketing. Decision Support Systems, Elsevier, 62:22-31, June 2014 DOI:https://doi.org/10.1016/j.dss.2014.03.001 <https://doi.org/10.1016/j.dss.2014.03.001>
+
+[2]: <https://doi.org/10.1016/j.dss.2014.03.001>
+
+[3]. Bank Marketing Dataset,Kaggle,<https://www.kaggle.com/datasets/janiobachmann/bank-marketing-dataset?select=bank.csv,2017>
+
+[3]: <https://www.kaggle.com/datasets/janiobachmann/bank-marketing-dataset?select=bank.csv>
+
+[4]. Bank Marketing Analysis,Kaggle,<https://www.kaggle.com/code/aleksandradeis/bank-marketing-analysis,2019>
+
+[4]: <https://www.kaggle.com/code/aleksandradeis/bank-marketing-analysis>
